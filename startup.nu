@@ -1,2 +1,2 @@
-export use procstatus.nu
+export use procfs.nu
 export use timezone.nu

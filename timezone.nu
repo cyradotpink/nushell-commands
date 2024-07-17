@@ -145,7 +145,7 @@ export def main [--tzfile (-f): string = '/etc/localtime']: any -> record {
     } else if ($time | describe) == 'date' {
         $time | into int | $in / 10 ** 9 | math floor
     } else {
-        error make -u { msg: 'time must be date or int' }
+        error make -u { msg: 'time must be date, int or nothing' }
     }
     open $tzfile | parse_tzif | get body | interpret_body | reject tt_spec_type | where transition_at <= $time | last
                  | update transition_at ($in.transition_at * 10 ** 9 | into datetime) | update ut_offset ($in.ut_offset * 10 ** 9 | into duration)
