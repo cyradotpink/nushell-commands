@@ -119,7 +119,8 @@ def interpret_body []: record -> table {
     ($body.transition_times | enumerate | each {|v|
         let info_index = $body.tt_type_map | get $v.index
         let tt_info = $body.tt_info | get $info_index
-        let desig = $body.desigs_bytes | bytes at ($tt_info.desig_idx).. | bytes at ..<($in | bytes index-of 0x[00]) | decode 'utf-8'
+        let desig = $body.desigs_bytes | bytes at ($tt_info.desig_idx)..
+                            |(let _in = $in; $in | bytes at ..<($_in | bytes index-of 0x[00])) | decode 'utf-8'
         let is_ut = if ($body.is_ut_indicators | length) > 0 { $body.is_ut_indicators | get $info_index } else { false }
         let tt_spec_type = if $is_ut { 'ut' } else { 
             if ($body.is_std_indicators | length) > 0 {
@@ -151,6 +152,6 @@ export def main [--tzfile (-f): string = '/etc/localtime']: any -> record {
                  | update transition_at ($in.transition_at * 10 ** 9 | into datetime) | update ut_offset ($in.ut_offset * 10 ** 9 | into duration)
 }
 
-export def show [tzfile: string = '/etc/localtime']: any -> table {
+export def show [tzfile: string = '/etc/localtime']: any -> record {
     open $tzfile | parse_tzif | [($in.body | interpret_body) $in.footer] | { data: $in.0, posix_rule: $in.1 }
 }
