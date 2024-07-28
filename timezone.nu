@@ -2,15 +2,15 @@ use std
 
 def get_data_length [time_size: int]: record -> int {
     let header = $in
-    let data_len = 0
-    let data_len = $data_len + $header.time_cnt * $time_size
-    let data_len = $data_len + $header.time_cnt
-    let data_len = $data_len + $header.type_cnt * 6
-    let data_len = $data_len + $header.char_cnt
-    let data_len = $data_len + $header.leap_cnt * ($time_size + 4)
-    let data_len = $data_len + $header.is_std_cnt
-    let data_len = $data_len + $header.is_ut_cnt
-    $data_len
+    [
+        ($header.time_cnt * $time_size)
+        $header.time_cnt
+        ($header.type_cnt * 6)
+        $header.char_cnt
+        ($header.leap_cnt * ($time_size + 4))
+        $header.is_std_cnt
+        $header.is_ut_cnt
+    ] | math sum
 }
 
 def parse_header []: binary -> record {
@@ -22,8 +22,7 @@ def parse_header []: binary -> record {
     let unparsed = ($unparsed | bytes at 4..)
     $header.version = ($unparsed | bytes at ..<1 | decode 'utf-8' | if $in == (char --integer 0) { 1 } else { $in | into int })
     std assert ($header.version in [1, 2, 3]) 'Expected version 1, 2 or 3'
-    let unparsed = ($unparsed | bytes at 1..)
-    let unparsed = ($unparsed | bytes at 15..) # fifteen unused "reserved" bytes
+    let unparsed = ($unparsed | bytes at 1.. |  bytes at 15..) # fifteen unused "reserved" bytes
     let header = (['is_ut_cnt', 'is_std_cnt', 'leap_cnt', 'time_cnt', 'type_cnt', 'char_cnt']
         | enumerate | reduce --fold $header {|v, acc|
             $acc | insert $v.item ($unparsed | bytes at ($v.index * 4)..<(($v.index + 1) * 4) | into int --endian big)
@@ -122,34 +121,28 @@ def interpret_body []: record -> table {
         let desig = $body.desigs_bytes | bytes at ($tt_info.desig_idx)..
                             |(let _in = $in; $in | bytes at ..<($_in | bytes index-of 0x[00])) | decode 'utf-8'
         let is_ut = if ($body.is_ut_indicators | length) > 0 { $body.is_ut_indicators | get $info_index } else { false }
-        let tt_spec_type = if $is_ut { 'ut' } else { 
-            if ($body.is_std_indicators | length) > 0 {
-                if ($body.is_std_indicators | get $info_index) { 'std' } else { 'wall' }
-            } else { 'wall' }
-        }
+        # let tt_spec_type = if $is_ut { 'ut' } else { 
+        #     if ($body.is_std_indicators | length) > 0 {
+        #         if ($body.is_std_indicators | get $info_index) { 'std' } else { 'wall' }
+        #     } else { 'wall' }
+        # }
         {
-            transition_at: $v.item
-            tt_spec_type: $tt_spec_type
-            ut_offset: $tt_info.ut_off
+            transition_at: ($v.item * 1000 ** 3 | into datetime)
+            # tt_spec_type: $tt_spec_type
+            ut_offset: ($tt_info.ut_off * 1000 ** 3 | into duration)
             is_dst: $tt_info.is_dst
             name: $desig
         }
     })
 }
 
-export def main [--tzfile (-f): string = '/etc/localtime']: any -> record {
-    let time = $in
-    let time = if $time == null {
-        date now | into int | $in / 10 ** 9 | math floor
-    } else if ($time | describe) == 'int' {
-        $time
-    } else if ($time | describe) == 'date' {
-        $time | into int | $in / 10 ** 9 | math floor
+export def main [--tzfile (-f): string = '/etc/localtime']: datetime -> record {
+    let time = if $in == null {
+        date now
     } else {
-        error make -u { msg: 'time must be date, int or nothing' }
+        $in
     }
-    open $tzfile | parse_tzif | get body | interpret_body | reject tt_spec_type | where transition_at <= $time | last
-                 | update transition_at ($in.transition_at * 10 ** 9 | into datetime) | update ut_offset ($in.ut_offset * 10 ** 9 | into duration)
+    open $tzfile | parse_tzif | get body | interpret_body | where transition_at <= $time | last
 }
 
 export def show [tzfile: string = '/etc/localtime']: any -> record {
