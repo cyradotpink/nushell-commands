@@ -14,7 +14,7 @@ export def main [location: string] {
         null
     }
     let url = http head -R m https://discord.com/api/download/stable?platform=linux&format=tar.gz | where name == location | get 0.value
-    let available = $url | split row '/' | last 2 | into record | rename version filename
+    let available = $url | split row '/' | last 2 | { version: $in.0 filename: $in.1 }
     if $installed_version == $available.version {
         let input = input -u "\n" $"No new version available. Reinstall version ($available.version)? \(y/[n]) "
         if $input != y { exit 0 }
