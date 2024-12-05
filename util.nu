@@ -31,7 +31,6 @@ export def str-to-codepoints []: string -> list {
             loop {
                 let marker_candidate = 0b0011_1111 | bits shr -n 1 ($length - 2) | bits not -n 1
                 $marker_mask = (0b0001_1111 | bits shr -n 1 ($length - 2) | bits not -n 1)
-                print $marker_mask
                 if ($first_byte | bits and $marker_mask) == $marker_candidate {
                     break
                 }
@@ -42,7 +41,6 @@ export def str-to-codepoints []: string -> list {
         let length = $codepoint_info.0
         let mask = $codepoint_info.1
         mut codepoint = $first_byte | bits and $mask | bits shl -n 4 (6 * ($length - 1))
-        print $codepoint
         let mask = 0b0011_1111
         for n in 1..<($length) {
             let utf8_byte = $utf8_bytes | bytes at ($offset + $n).. | first
