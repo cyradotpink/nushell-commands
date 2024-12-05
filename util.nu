@@ -13,8 +13,7 @@ export module git-util {
     }
 
     export def show-config []: any -> any {
-        git config -l -z | split row (char -i 0) | each { lines | into record | rename key value }
-        #parse -r '^(?P<section>.*?)\.(?P<subsection>.*?)\.?(?P<key>[^.]*)$'
+        git config -l -z | split row (char -i 0) | filter { str length | $in > 0 } | each { lines | { key: $in.0, value: $in.1? } }
     }
 }
 
