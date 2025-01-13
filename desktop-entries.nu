@@ -1,4 +1,4 @@
-# this is kind of slow :(
+# This is slow. Avoid parsing every file in the database.
 export def desktop-file-parse []: string -> table {
     parse -r '(?P<key>.+?)(?:\[(?P<locale>.*)\])? *= *(?P<value>.*)|(?:\[(?P<category>.+)\])(?:\n|$)'
     | reduce --fold {cat: "", out: {}} {|it, acc|
@@ -27,16 +27,26 @@ export def xdg-data-dirs []: nothing -> list {
     $user_dirs | append $system_dirs
 }
 
-export def all-desktop-entries []: nothing -> list {
+# This is slow. Prefer pre-filtering desktop entry files by e.g. substring search
+def all-desktop-entry-files []: nothing -> list {
     xdg-data-dirs
-    | each {|v| try { ls --threads $"($v)/applications" } catch { [] } }
+    | each {|v| try { ls $"($v)/applications" } catch { [] } }
     | flatten
     | filter { get name | str ends-with .desktop }
-    | each { get name | open | desktop-file-parse }
 }
 
+export def all-desktop-entries []: nothing -> list {
+    all-desktop-entry-files | each { get name | open | desktop-file-parse }
+}
+
+# Only fully parses files after a simple substring search matches.
+# Speed therefore depends on the name; For example, searching for an application called "Name"
+# might still result in every desktop entry file being parsed.
 export def find-by-name-exact [name: string]: nothing -> list {
-    all-desktop-entries
+    all-desktop-entry-files
+    | each { get name | open }
+    | filter { str contains $name }
+    | each { desktop-file-parse }
     | filter { get 'Desktop entry' | any {|v| $v.key == Name and $v.value == $name } }
 }
 
