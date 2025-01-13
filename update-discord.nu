@@ -1,4 +1,10 @@
-export def main [location: string] {
+export def main [location?: string] {
+    let location = if $location == null {
+        print "Trying to find Discord path by searching desktop entries..."
+        desktop-entries find-by-name-exact Discord | first | desktop-entries get-binary-path | path dirname
+    } else {
+        $location
+    }
     print $"Selected location: ($location)"
 
     cd $location
@@ -9,7 +15,7 @@ export def main [location: string] {
         $installed_version
     } catch {
         let input = input -u "\n" $"No installed version found. Continue anyway? \(y/[n]) "
-        if $input != y { exit 0 }
+        if $input != y { return }
         print "Checking available..."
         null
     }
@@ -17,10 +23,10 @@ export def main [location: string] {
     let available = $url | split row '/' | last 2 | { version: $in.0 filename: $in.1 }
     if $installed_version == $available.version {
         let input = input -u "\n" $"No new version available. Reinstall version ($available.version)? \(y/[n]) "
-        if $input != y { exit 0 }
+        if $input != y { return }
     } else {
         let input = input -u "\n" $"Available version is ($available.version). Install? \([y]/n) "
-        if $input != y and $input != "" { exit 0 }
+        if $input != y and $input != "" { return }
     }
     print $"Downloading version ($available.version)..."
     http get $url | save -f $available.filename
