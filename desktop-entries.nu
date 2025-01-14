@@ -22,8 +22,8 @@ export def desktop-file-parse []: string -> table {
 }
 
 export def xdg-data-dirs []: nothing -> list {
-    let user_dirs = $env | try { get "XDG_DATA_HOME" } catch { $"($env.HOME)/.local/share" } | split row ":"
-    let system_dirs = $env | try { get "XDG_DATA_DIRS" } catch { "/usr/local/share:/usr/share" } | split row ":"
+    let user_dirs = $env.XDG_DATA_HOME? | default $"($env.HOME)/.local/share" | split row ":"
+    let system_dirs = $env.XDG_DATA_DIRS? | default "/usr/local/share:/usr/share" | split row ":"
     $user_dirs | append $system_dirs
 }
 
