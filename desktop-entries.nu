@@ -27,7 +27,6 @@ export def xdg-data-dirs []: nothing -> list {
     $user_dirs | append $system_dirs
 }
 
-# This is slow. Prefer pre-filtering desktop entry files by e.g. substring search
 def all-desktop-entry-files []: nothing -> list {
     xdg-data-dirs
     | each {|v| try { ls $"($v)/applications" } catch { [] } }
@@ -35,6 +34,7 @@ def all-desktop-entry-files []: nothing -> list {
     | filter { get name | str ends-with .desktop }
 }
 
+# This is slow. Prefer pre-filtering desktop entry files by e.g. substring search
 export def all-desktop-entries []: nothing -> list {
     all-desktop-entry-files | each { get name | open | desktop-file-parse }
 }
