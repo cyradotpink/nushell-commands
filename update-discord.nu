@@ -1,7 +1,7 @@
 export def main [location?: string] {
     let location = if $location == null {
         print "Trying to find Discord path by searching desktop entries..."
-        desktop-entries find-by-name-exact Discord | first | desktop-entries get-binary-path | path dirname
+        desktop-entries find-by-name-exact Discord | first | get content | desktop-entries get-binary-path | path dirname
     } else {
         $location
     }

@@ -44,10 +44,10 @@ export def all-desktop-entries []: nothing -> list {
 # might still result in every desktop entry file being parsed.
 export def find-by-name-exact [name: string]: nothing -> list {
     all-desktop-entry-files
-    | each { get name | open }
-    | filter { str contains $name }
-    | each { desktop-file-parse }
-    | filter { get 'Desktop entry' | any {|v| $v.key == Name and $v.value == $name } }
+    | each { get name | {path: $in, content: ($in | open)} }
+    | filter { get content | str contains $name }
+    | each { {path: $in.path, content: ($in.content | desktop-file-parse) } }
+    | filter { get content.'Desktop entry' | any {|v| $v.key == Name and $v.value == $name } }
 }
 
 export def get-binary-path []: record -> string {
