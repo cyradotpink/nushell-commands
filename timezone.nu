@@ -121,7 +121,7 @@ def interpret_body []: record -> table {
         let desig = $body.desigs_bytes | bytes at ($tt_info.desig_idx)..
                             |(let _in = $in; $in | bytes at ..<($_in | bytes index-of 0x[00])) | decode 'utf-8'
         let is_ut = if ($body.is_ut_indicators | length) > 0 { $body.is_ut_indicators | get $info_index } else { false }
-        # let tt_spec_type = if $is_ut { 'ut' } else { 
+        # let tt_spec_type = if $is_ut { 'ut' } else {
         #     if ($body.is_std_indicators | length) > 0 {
         #         if ($body.is_std_indicators | get $info_index) { 'std' } else { 'wall' }
         #     } else { 'wall' }
@@ -136,7 +136,7 @@ def interpret_body []: record -> table {
     })
 }
 
-export def main [--tzfile (-f): string = '/etc/localtime']: datetime -> record {
+export def main [--tzfile (-f): string = '/etc/localtime']: [nothing -> record, datetime -> record] {
     let time = if $in == null {
         date now
     } else {
