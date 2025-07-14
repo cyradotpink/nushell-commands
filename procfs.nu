@@ -23,7 +23,7 @@ export def status [pid: int] {
             # | first
         }
         | flatten
-        | update groups { split row ' ' | filter { str length | $in > 0 } | each { into int } }
+        | update groups { split row ' ' | where { str length | $in > 0 } | each { into int } }
         | update cells --columns [tgid ngid pid p_pid tracer_pid fd_size voluntary_ctxt_switches
                                   nonvoluntary_ctxt_switches] { into int }
         | update cells --columns [vm_peak vm_size vm_lck vm_pin vm_hwm vm_rss rss_anon rss_file

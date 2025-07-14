@@ -75,7 +75,7 @@ def parse_body [header: record, time_size: int]: binary -> record {
         $unparsed | bytes at ($i)..<($i + 1) | into int | $in > 0
     })
     let body = $body
-    $body.is_ut_indicators | enumerate | filter {|v| $v.item} | each {|v|
+    $body.is_ut_indicators | enumerate | where {|v| $v.item} | each {|v|
         std assert ($body.is_std_indicators | get $v.index) 'Expected std indicator to be true because UT indicator was true'
     }
     let unparsed = ($unparsed | bytes at ($header.is_ut_cnt)..)

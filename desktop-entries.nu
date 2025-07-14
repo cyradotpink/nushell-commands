@@ -31,7 +31,7 @@ def all-desktop-entry-files []: nothing -> list {
     xdg-data-dirs
     | each {|v| try { ls $"($v)/applications" } catch { [] } }
     | flatten
-    | filter { get name | str ends-with .desktop }
+    | where { get name | str ends-with .desktop }
 }
 
 # This is slow. Prefer pre-filtering desktop entry files by e.g. substring search
@@ -45,9 +45,9 @@ export def all-desktop-entries []: nothing -> list {
 export def find-by-name-exact [name: string]: nothing -> list {
     all-desktop-entry-files
     | each { get name | {path: $in, content: ($in | open)} }
-    | filter { get content | str contains $name }
+    | where { get content | str contains $name }
     | each { {path: $in.path, content: ($in.content | desktop-file-parse) } }
-    | filter { get content.'Desktop entry' | any {|v| $v.key == Name and $v.value == $name } }
+    | where { get content.'Desktop entry' | any {|v| $v.key == Name and $v.value == $name } }
 }
 
 export def get-binary-path []: record -> string {
