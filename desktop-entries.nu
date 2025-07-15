@@ -47,7 +47,7 @@ export def find-by-name-exact [name: string]: nothing -> list {
     | each { get name | {path: $in, content: ($in | open)} }
     | where { get content | str contains $name }
     | each { {path: $in.path, content: ($in.content | desktop-file-parse) } }
-    | where { get content.'Desktop entry' | any {|v| $v.key == Name and $v.value == $name } }
+    | where { get content.'Desktop Entry' | any {|v| $v.key == Name and $v.value == $name } }
 }
 
 export def get-binary-path []: record -> string {
